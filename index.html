@@ -101,7 +101,7 @@
         }
 
         .word-scroll-list {
-            max-height: 200px;
+            max-height: 180px;
             overflow-y: auto;
             margin-top: 0.5rem;
             padding-left: 0.5rem;
@@ -115,6 +115,58 @@
         .word-item {
             border-bottom: 1px dashed var(--border-color);
             padding: 0.25rem 0;
+        }
+
+        /* --- TROUBLE WORDS DRAWER --- */
+        .trouble-section {
+            background: rgba(239, 68, 68, 0.05);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: 4px;
+            padding: 0.5rem;
+        }
+        .trouble-summary {
+            color: #b91c1c;
+        }
+        .review-trouble-btn {
+            width: 100%;
+            font-family: inherit;
+            font-size: 0.8rem;
+            background: #fee2e2;
+            color: #b91c1c;
+            border: 1px solid #fca5a5;
+            padding: 0.4rem;
+            margin-bottom: 0.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .review-trouble-btn:hover {
+            background: #fca5a5;
+        }
+
+        /* --- SENTENCE EXAMPLES SYSTEM --- */
+        .example-box {
+            margin: 0.5rem 0 1rem 0;
+            padding: 0.5rem;
+            border-left: 2px solid var(--border-color);
+            font-size: 0.9rem;
+            text-align: left;
+            width: 100%;
+            display: none; /* Kept hidden until toggled */
+        }
+        .example-sentence {
+            margin-bottom: 0.4rem;
+            line-height: 1.4;
+        }
+        button.example-toggle-btn {
+            background: none;
+            border: none;
+            color: #1c1917;
+            text-decoration: underline;
+            font-size: 0.85rem;
+            cursor: pointer;
+            margin-bottom: 0.75rem;
+            font-family: inherit;
         }
 
         /* --- MAIN INTERFACE --- */
@@ -144,7 +196,7 @@
         /* --- 3D FLIP CARD DESIGN --- */
         .vocab-card-wrapper {
             perspective: 1000px;
-            min-height: 220px;
+            min-height: 240px;
             cursor: pointer;
         }
 
@@ -183,6 +235,7 @@
         .card-back {
             background: var(--card-bg-back);
             transform: rotateY(180deg);
+            justify-content: space-between; /* Yield clean spacing with dynamic text fields */
         }
 
         .german {
@@ -195,7 +248,8 @@
         .english {
             font-size: 1.5rem;
             color: #44403c;
-            margin-bottom: 1.5rem;
+            margin-top: auto;
+            margin-bottom: 0.5rem;
             text-align: center;
         }
 
@@ -205,6 +259,7 @@
             gap: 1rem;
             width: 100%;
             justify-content: center;
+            margin-top: auto;
         }
 
         button.action-btn {
@@ -258,6 +313,7 @@
 
     <button class="sidebar-toggle" onclick="toggleSidebar()">☰ Menu</button>
 
+    <!-- Navigation Drawer Sidebar -->
     <div id="sidebar" class="sidebar">
         <h3 style="font-style: italic; font-weight: normal; margin-top: 1.5rem;">Session Stats</h3>
         <div class="stats-box">
@@ -266,6 +322,17 @@
         </div>
 
         <div class="list-container">
+            <!-- DEDICATED TROUBLE AREA -->
+            <div class="trouble-section">
+                <details>
+                    <summary class="trouble-summary">⚠️ Trouble Words (<span id="count-trouble-list">0</span>)</summary>
+                    <div style="margin-top:0.5rem;">
+                        <button class="review-trouble-btn" onclick="loadTroubleCards()">Review Trouble Pool</button>
+                    </div>
+                    <div id="list-trouble" class="word-scroll-list"></div>
+                </details>
+            </div>
+
             <details>
                 <summary>To Review Next (<span id="count-due-list">0</span>)</summary>
                 <div id="list-due" class="word-scroll-list"></div>
@@ -278,6 +345,7 @@
         </div>
     </div>
 
+    <!-- Main Dynamic Application Workspace -->
     <div class="main-content">
         <div class="container">
             <div id="vocab-grid" class="grid"></div>
@@ -311,8 +379,11 @@
                         localStorage.setItem('german_srs_vocab', JSON.stringify(vocabList));
                     }
                 } else {
-                    vocabList = defaultVocabulary;
-                    localStorage.setItem('german_srs_vocab', JSON.stringify(defaultVocabulary));
+                    vocabList = defaultVocabulary.map(item => {
+                        if (item.isTrouble === undefined) item.isTrouble = false;
+                        return item;
+                    });
+                    localStorage.setItem('german_srs_vocab', JSON.stringify(vocabList));
                 }
 
                 updateSidebarData();
@@ -337,27 +408,40 @@
             const now = Date.now();
             const due = vocabList.filter(w => w.nextReview <= now);
             const mastered = vocabList.filter(w => w.nextReview > now);
+            const trouble = vocabList.filter(w => w.isTrouble === true);
 
             document.getElementById('stat-due').innerText = due.length;
             document.getElementById('stat-done').innerText = mastered.length;
             document.getElementById('count-due-list').innerText = due.length;
             document.getElementById('count-done-list').innerText = mastered.length;
+            document.getElementById('count-trouble-list').innerText = trouble.length;
 
             document.getElementById('list-due').innerHTML = due.map(w => `<div class="word-item"><b>${w.de}</b>: ${w.en}</div>`).join('') || 'None due';
-            document.getElementById('list-done').innerHTML = mastered.map(w => `<div class="word-item"><b>${w.de}</b>: ${w.en}</div>`).join('') || 'None items mastered';
+            document.getElementById('list-done').innerHTML = mastered.map(w => `<div class="word-item"><b>${w.de}</b>: ${w.en}</div>`).join('') || 'No items mastered';
+            document.getElementById('list-trouble').innerHTML = trouble.map(w => `<div class="word-item"><b>${w.de}</b>: ${w.en}</div>`).join('') || 'No trouble words yet';
         }
 
         function loadSessionCards() {
             const now = Date.now();
             let dueCards = vocabList.filter(word => word.nextReview <= now);
             
-            // If all are processed, draw random options from the overall list to fulfill request
             if (dueCards.length === 0) {
                 dueCards = [...vocabList];
             }
             
             const selected = dueCards.sort(() => 0.5 - Math.random()).slice(0, 3);
             renderCards(selected);
+        }
+
+        function loadTroubleCards() {
+            const troublePool = vocabList.filter(w => w.isTrouble === true);
+            if (troublePool.length === 0) {
+                alert("Your Trouble Pool is empty! Great job!");
+                return;
+            }
+            const selected = troublePool.sort(() => 0.5 - Math.random()).slice(0, 3);
+            renderCards(selected);
+            toggleSidebar();
         }
 
         function renderCards(cards) {
@@ -372,11 +456,24 @@
             grid.innerHTML = cards.map(word => `
                 <div class="vocab-card-wrapper" onclick="flipCard(this)">
                     <div class="vocab-card" id="card-${word.id}">
+                        <!-- FRONT SIDE -->
                         <div class="card-front">
                             <div class="german">${word.de}</div>
                         </div>
+                        <!-- BACK SIDE -->
                         <div class="card-back" onclick="event.stopPropagation();">
                             <div class="english">${word.en}</div>
+                            
+                            <!-- EXAMPLES TOGGLE REGION -->
+                            ${word.examples && word.examples.length > 0 ? `
+                                <button class="example-toggle-btn" onclick="document.getElementById('ex-${word.id}').style.display='block'; this.style.display='none';">
+                                    Show Examples ↓
+                                </button>
+                                <div id="ex-${word.id}" class="example-box">
+                                    ${word.examples.map(ex => `<div class="example-sentence">${ex}</div>`).join('')}
+                                </div>
+                            ` : ''}
+
                             <div class="action-buttons">
                                 <button class="action-btn forgot-btn" onclick="rateWord(${word.id}, false)">Forgot</button>
                                 <button class="action-btn got-btn" onclick="rateWord(${word.id}, true)">Got It</button>
@@ -400,8 +497,10 @@
 
             if (remembered) {
                 word.interval = word.interval === 0 ? 1 : Math.min(word.interval * 2, 720);
+                word.isTrouble = false;
             } else {
                 word.interval = 0;
+                word.isTrouble = true;
             }
 
             word.nextReview = Date.now() + (word.interval * 60 * 60 * 1000);
