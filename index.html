@@ -420,21 +420,20 @@
         function updateSidebarData() {
             const now = Date.now();
             
-            // 1. New or Overdue: Brand new cards OR cards whose review timer has run out
+            // 1. New / Due: ONLY brand-new cards (never seen before) OR cards whose timers have actively expired
             const newOrDue = vocabList.filter(w => {
                 const nextReviewNum = parseInt(w.nextReview || 0, 10);
                 return nextReviewNum === 0 || nextReviewNum <= now;
             });
             
-            // 2. In Progress: Cards you have seen, are not currently overdue, and are actively being learned
+            // 2. In Progress: Any card you have encountered at least once, that hasn't graduated to mastery yet.
             const inProgress = vocabList.filter(w => {
                 const nextReviewNum = parseInt(w.nextReview || 0, 10);
                 const intervalNum = parseInt(w.interval || 0, 10);
-                // Has been seen, is scheduled for the future, has not been forgotten to 0, and isn't mastered yet
-                return nextReviewNum > now && intervalNum > 0 && intervalNum <= 48;
+                return nextReviewNum > 0 && intervalNum <= 48;
             });
             
-            // 3. Mastered: Long-term retention cards
+            // 3. Mastered: Long-term memory tracking remains completely identical
             const mastered = vocabList.filter(w => {
                 const nextReviewNum = parseInt(w.nextReview || 0, 10);
                 const intervalNum = parseInt(w.interval || 0, 10);
@@ -450,9 +449,46 @@
             document.getElementById('count-reviewing-list').innerText = inProgress.length;
             document.getElementById('count-mastered-list').innerText = mastered.length;
         
-            // Render lists inside the dropdown drawers
+            // Render lists inside dropdown panels
             document.getElementById('list-learning').innerHTML = newOrDue.map(w => `<div class="word-item"><b>${w.de}</b>: ${w.en}</div>`).join('') || 'All caught up!';
-            document.getElementById('list-reviewing').innerHTML = inProgress.map(w => `<div class="word-item"><b>${w.de}</b>: ${w.en} <span style="color:#888;">(${w.interval}h)</span></div>`).join('') || 'No cards in progress';
+            
+            // RENDER IN PROGRESS PANEL WITH DYNAMIC SLIDING COLOR MATRIX
+            document.getElementById('list-reviewing').innerHTML = inProgress.map(w => {
+                const nextReviewNum = parseInt(w.nextReview || 0, 10);
+                const intervalNum = parseInt(w.interval || 0, 10);
+                
+                // Calculate the exact span of time this card was assigned to wait
+                const totalWaitMs = intervalNum * 60 * 60 * 1000;
+                const timeRemainingMs = nextReviewNum - now;
+                
+                let colorStyle = "";
+                let dueBadge = "";
+        
+                if (timeRemainingMs <= 0) {
+                    // Card is completely due or overdue -> Deep Editorial Red
+                    colorStyle = "color: #b91c1c; font-weight: bold;";
+                    dueBadge = `<span style="font-size: 0.75rem; letter-spacing:0.05em; margin-left: 6px; padding: 1px 4px; background: #fee2e2; border-radius:3px;">DUE</span>`;
+                } else {
+                    // Calculate a ratio from 0.0 (just reviewed) to 1.0 (about to be due)
+                    // Guard against division by zero just in case
+                    const ratio = totalWaitMs > 0 ? Math.min(Math.max((totalWaitMs - timeRemainingMs) / totalWaitMs, 0), 1) : 1;
+                    
+                    // HSL Hue Scale: 120 is Green, 0 is Red.
+                    // As ratio approaches 1.0, hue sweeps smoothly down from 120 toward 0.
+                    const hue = Math.round(120 - (ratio * 120));
+                    
+                    // Softened saturation (65%) and subtle editorial darkness (40%) to keep text perfectly legible
+                    colorStyle = `color: hsl(${hue}, 65%, 40%);`;
+                }
+        
+                return `
+                    <div class="word-item" style="${colorStyle}">
+                        <b>${w.de}</b>: ${w.en} 
+                        <span style="opacity: 0.7; font-size: 0.8rem;">(${intervalNum}h)</span>${dueBadge}
+                    </div>
+                `;
+            }).join('') || 'No cards in progress';
+            
             document.getElementById('list-mastered').innerHTML = mastered.map(w => `<div class="word-item"><b>${w.de}</b>: ${w.en} ✓</div>`).join('') || 'None yet';
         }
         
