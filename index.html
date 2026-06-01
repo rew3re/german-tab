@@ -746,8 +746,8 @@ function startDashboardClock() {
 // 2. Weather Engine via Open-Meteo (No API keys required)
 async function fetchGermanWeather() {
     // ⚠️ REPLACE these coordinates with your actual City Latitude / Longitude!
-    const lat = 52.52; // Berlin Example
-    const lon = 13.40;
+    const lat = 50.00001949149396; // Berlin Example
+    const lon = 8.271711615077919;
     
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&timezone=auto`;
     const weatherDisplay = document.getElementById('weather-display');
