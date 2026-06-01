@@ -329,41 +329,34 @@
 
     <button class="sidebar-toggle" onclick="toggleSidebar()">☰ Menu</button>
 
-    <div id="sidebar" class="sidebar">
-        <h3 style="font-style: italic; font-weight: normal; margin-top: 1.5rem;">Session Stats</h3>
-        <div class="stats-box">
-            <div>Learning/Due: <span id="stat-learning">0</span></div>
-            <div>Reviewing: <span id="stat-reviewing">0</span></div>
-            <div>Mastered: <span id="stat-mastered">0</span></div>
-        </div>
-
-        <div class="list-container">
-            <div class="trouble-section">
+        <!-- Update your Sidebar Titles inside index.html -->
+        <div id="sidebar" class="sidebar">
+            <h3 style="font-style: italic; font-weight: normal; margin-top: 1.5rem;">Session Stats</h3>
+            <div class="stats-box">
+                <div>New / Due: <span id="stat-learning">0</span></div>
+                <div>In Progress: <span id="stat-reviewing">0</span></div>
+                <div>Mastered: <span id="stat-mastered">0</span></div>
+            </div>
+        
+            <div class="list-container">
+                <!-- Note: We can completely delete the old "Trouble Pool" HTML drawer block here -->
+                
                 <details>
-                    <summary class="trouble-summary">⚠️ Trouble Words (<span id="count-trouble-list">0</span>)</summary>
-                    <div style="margin-top:0.5rem;">
-                        <button class="review-trouble-btn" onclick="loadTroubleCards()">Review Trouble Pool</button>
-                    </div>
-                    <div id="list-trouble" class="word-scroll-list"></div>
+                    <summary>New / Due Pool (<span id="count-learning-list">0</span>)</summary>
+                    <div id="list-learning" class="word-scroll-list"></div>
+                </details>
+        
+                <details>
+                    <summary>In Progress Pool (<span id="count-reviewing-list">0</span>)</summary>
+                    <div id="list-reviewing" class="word-scroll-list"></div>
+                </details>
+        
+                <details>
+                    <summary>Mastered Pool (<span id="count-mastered-list">0</span>)</summary>
+                    <div id="list-mastered" class="word-scroll-list"></div>
                 </details>
             </div>
-
-            <details>
-                <summary>Learning / Due (<span id="count-learning-list">0</span>)</summary>
-                <div id="list-learning" class="word-scroll-list"></div>
-            </details>
-
-            <details>
-                <summary>Reviewing Tier (<span id="count-reviewing-list">0</span>)</summary>
-                <div id="list-reviewing" class="word-scroll-list"></div>
-            </details>
-
-            <details>
-                <summary>Mastered Tier (<span id="count-mastered-list">0</span>)</summary>
-                <div id="list-mastered" class="word-scroll-list"></div>
-            </details>
         </div>
-    </div>
 
     <div class="main-content">
         <div class="container">
@@ -423,46 +416,44 @@
                 localStorage.setItem('german_srs_vocab', JSON.stringify(vocabList));
             } catch (e) {}
         }
-
+        
         function updateSidebarData() {
             const now = Date.now();
-    
-            // Ensure all variables are parsed as absolute numbers to prevent string bugs
-            const learning = vocabList.filter(w => {
+            
+            // 1. New or Overdue: Brand new cards OR cards whose review timer has run out
+            const newOrDue = vocabList.filter(w => {
+                const nextReviewNum = parseInt(w.nextReview || 0, 10);
+                return nextReviewNum === 0 || nextReviewNum <= now;
+            });
+            
+            // 2. In Progress: Cards you have seen, are not currently overdue, and are actively being learned
+            const inProgress = vocabList.filter(w => {
                 const nextReviewNum = parseInt(w.nextReview || 0, 10);
                 const intervalNum = parseInt(w.interval || 0, 10);
-                return intervalNum <= 1 || nextReviewNum <= now;
+                // Has been seen, is scheduled for the future, has not been forgotten to 0, and isn't mastered yet
+                return nextReviewNum > now && intervalNum > 0 && intervalNum <= 48;
             });
-    
-            const reviewing = vocabList.filter(w => {
-                const nextReviewNum = parseInt(w.nextReview || 0, 10);
-                const intervalNum = parseInt(w.interval || 0, 10);
-                return intervalNum > 1 && intervalNum <= 48 && nextReviewNum > now;
-            });
-    
+            
+            // 3. Mastered: Long-term retention cards
             const mastered = vocabList.filter(w => {
                 const nextReviewNum = parseInt(w.nextReview || 0, 10);
                 const intervalNum = parseInt(w.interval || 0, 10);
                 return intervalNum > 48 && nextReviewNum > now;
             });
-    
-            const trouble = vocabList.filter(w => w.isTrouble === true || w.isTrouble === "true");
-
-            // Push calculations safely to UI DOM Elements
-            document.getElementById('stat-learning').innerText = learning.length;
-            document.getElementById('stat-reviewing').innerText = reviewing.length;
+        
+            // Update the Sidebar Counters
+            document.getElementById('stat-learning').innerText = newOrDue.length;
+            document.getElementById('stat-reviewing').innerText = inProgress.length;
             document.getElementById('stat-mastered').innerText = mastered.length;
-    
-            document.getElementById('count-learning-list').innerText = learning.length;
-            document.getElementById('count-reviewing-list').innerText = reviewing.length;
+            
+            document.getElementById('count-learning-list').innerText = newOrDue.length;
+            document.getElementById('count-reviewing-list').innerText = inProgress.length;
             document.getElementById('count-mastered-list').innerText = mastered.length;
-            document.getElementById('count-trouble-list').innerText = trouble.length;
-
-            // Render text snippets inside sidebar dropdown panels
-            document.getElementById('list-learning').innerHTML = learning.map(w => `<div class="word-item"><b>${w.de}</b>: ${w.en}</div>`).join('') || 'Clear!';
-            document.getElementById('list-reviewing').innerHTML = reviewing.map(w => `<div class="word-item"><b>${w.de}</b>: ${w.en} <span style="color:#888;">(${w.interval}h)</span></div>`).join('') || 'Empty';
+        
+            // Render lists inside the dropdown drawers
+            document.getElementById('list-learning').innerHTML = newOrDue.map(w => `<div class="word-item"><b>${w.de}</b>: ${w.en}</div>`).join('') || 'All caught up!';
+            document.getElementById('list-reviewing').innerHTML = inProgress.map(w => `<div class="word-item"><b>${w.de}</b>: ${w.en} <span style="color:#888;">(${w.interval}h)</span></div>`).join('') || 'No cards in progress';
             document.getElementById('list-mastered').innerHTML = mastered.map(w => `<div class="word-item"><b>${w.de}</b>: ${w.en} ✓</div>`).join('') || 'None yet';
-            document.getElementById('list-trouble').innerHTML = trouble.map(w => `<div class="word-item"><b>${w.de}</b>: ${w.en}</div>`).join('') || 'No trouble words yet';
         }
         
         function loadSessionCards() {
