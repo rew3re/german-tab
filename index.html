@@ -447,41 +447,48 @@
         function renderCards(cards) {
             const grid = document.getElementById('vocab-grid');
             if (!grid) return;
-            
+    
             if (cards.length === 0) {
                 grid.innerHTML = `<div class="empty-state">🎉 All caught up for now!</div>`;
                 return;
             }
 
-            grid.innerHTML = cards.map(word => `
-                <div class="vocab-card-wrapper" onclick="flipCard(this)">
-                    <div class="vocab-card" id="card-${word.id}">
-                        <!-- FRONT SIDE -->
-                        <div class="card-front">
-                            <div class="german">${word.de}</div>
-                        </div>
-                        <!-- BACK SIDE -->
-                        <div class="card-back" onclick="event.stopPropagation();">
-                            <div class="english">${word.en}</div>
-                            
-                            <!-- EXAMPLES TOGGLE REGION -->
-                            ${word.examples && word.examples.length > 0 ? `
-                                <button class="example-toggle-btn" onclick="document.getElementById('ex-${word.id}').style.display='block'; this.style.display='none';">
-                                    Show Examples ↓
-                                </button>
-                                <div id="ex-${word.id}" class="example-box">
-                                    ${word.examples.map(ex => `<div class="example-sentence">${ex}</div>`).join('')}
-                                </div>
-                            ` : ''}
+            grid.innerHTML = cards.map(word => {
+                // Coin-flip: 50% chance for German front, 50% chance for English front
+                const isDeToEn = Math.random() < 0.5;
+        
+                // Dynamically assign card front and back content based on the coin flip
+                const frontText = isDeToEn ? word.de : word.en;
+                const backText = isDeToEn ? word.en : word.de;
+                const frontLabel = isDeToEn ? "" : "<span style='font-size:0.8rem; font-style:normal; color:#888; display:block; margin-bottom:0.5rem;'>Translate to German:</span>";
 
-                            <div class="action-buttons">
-                                <button class="action-btn forgot-btn" onclick="rateWord(${word.id}, false)">Forgot</button>
-                                <button class="action-btn got-btn" onclick="rateWord(${word.id}, true)">Got It</button>
+                return `
+                    <div class="vocab-card-wrapper" onclick="flipCard(this)">
+                        <div class="vocab-card" id="card-${word.id}">
+                            <div class="card-front">
+                                <div class="german">${frontLabel}${frontText}</div>
+                            </div>
+                            <div class="card-back" onclick="event.stopPropagation();">
+                                <div class="english" style="font-size: 2rem; font-style: italic;">${backText}</div>
+                        
+                                ${word.examples && word.examples.length > 0 ? `
+                                    <button class="example-toggle-btn" onclick="document.getElementById('ex-${word.id}').style.display='block'; this.style.display='none';">
+                                        Show Examples ↓
+                                    </button>
+                                    <div id="ex-${word.id}" class="example-box">
+                                        ${word.examples.map(ex => `<div class="example-sentence">${ex}</div>`).join('')}
+                                    </div>
+                                ` : ''}
+
+                                <div class="action-buttons">
+                                    <button class="action-btn forgot-btn" onclick="rateWord(${word.id}, false)">Forgot</button>
+                                    <button class="action-btn got-btn" onclick="rateWord(${word.id}, true)">Got It</button>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         window.flipCard = function(wrapper) {
