@@ -6,11 +6,13 @@
     <title>Smart German Vocab Tab</title>
     <style>
         :root {
-            --bg-color: #fdfdfc;
-            --text-color: #1c1917;
-            --card-bg-front: #fbfbf9;
-            --card-bg-back: #f5f5f0;
-            --border-color: #e7e5e4;
+            /* Financial Times Inspired Palette */
+            --bg-color: #fff1e5;       /* FT Velvet Bisque Pink */
+            --sidebar-bg: #f2e5da;     /* Slightly deeper contrast pink */
+            --text-color: #333333;
+            --card-bg-front: #fdfdfd;   /* Off-white page paper */
+            --card-bg-back: #f6ebe1;    /* Accent paper tint */
+            --border-color: #e9decf;    /* Soft warm border separation */
         }
 
         * {
@@ -35,7 +37,7 @@
             left: 0;
             height: 100vh;
             width: 280px;
-            background: var(--card-bg-front);
+            background: var(--sidebar-bg);
             border-right: 1px solid var(--border-color);
             padding: 2rem 1.5rem;
             transform: translateX(-100%);
@@ -57,12 +59,13 @@
             background: var(--card-bg-front);
             border: 1px solid var(--border-color);
             padding: 0.5rem 0.8rem;
-            border-radius: 6px;
+            border-radius: 4px;
             cursor: pointer;
             font-family: inherit;
             font-size: 0.9rem;
             z-index: 1001;
             transition: background 0.2s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
         }
         .sidebar-toggle:hover {
             background: var(--card-bg-back);
@@ -120,13 +123,16 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 2rem;
+            padding: 4rem 2rem 2rem 2rem;
             transition: margin-left 0.3s ease;
         }
 
         .container {
             max-width: 550px;
             width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
         }
 
         .grid {
@@ -148,7 +154,7 @@
             height: 100%;
             transform-style: preserve-3d;
             transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-            border-radius: 12px;
+            border-radius: 6px;
         }
 
         .vocab-card.flipped {
@@ -161,13 +167,13 @@
             height: 100%;
             backface-visibility: hidden;
             border: 1px solid var(--border-color);
-            border-radius: 12px;
+            border-radius: 6px;
             padding: 2rem;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
         }
 
         .card-front {
@@ -193,7 +199,7 @@
             text-align: center;
         }
 
-        /* --- ACTIONS BLOCK --- */
+        /* --- ACTIONS & CONTROL BUTTONS --- */
         .action-buttons {
             display: flex;
             gap: 1rem;
@@ -204,7 +210,7 @@
         button.action-btn {
             font-family: inherit;
             padding: 0.5rem 1.5rem;
-            border-radius: 6px;
+            border-radius: 4px;
             border: 1px solid var(--border-color);
             cursor: pointer;
             font-size: 0.95rem;
@@ -214,6 +220,31 @@
         
         button.forgot-btn:hover { background: #fee2e2; color: #b91c1c; border-color: #fca5a5; }
         button.got-btn:hover { background: #dcfce7; color: #15803d; border-color: #86efac; }
+
+        .more-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 0.5rem;
+        }
+
+        .more-btn {
+            font-family: inherit;
+            font-size: 1rem;
+            font-style: italic;
+            background: var(--card-bg-front);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 0.6rem 2rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        }
+
+        .more-btn:hover {
+            background: var(--card-bg-back);
+            border-color: #cfc4b5;
+        }
 
         .empty-state {
             font-size: 1.5rem;
@@ -227,7 +258,6 @@
 
     <button class="sidebar-toggle" onclick="toggleSidebar()">☰ Menu</button>
 
-    <!-- Navigation Drawer Sidebar -->
     <div id="sidebar" class="sidebar">
         <h3 style="font-style: italic; font-weight: normal; margin-top: 1.5rem;">Session Stats</h3>
         <div class="stats-box">
@@ -248,10 +278,13 @@
         </div>
     </div>
 
-    <!-- Main Dynamic Application Workspace -->
     <div class="main-content">
         <div class="container">
             <div id="vocab-grid" class="grid"></div>
+            
+            <div class="more-container">
+                <button class="more-btn" onclick="loadSessionCards()">Load More Cards</button>
+            </div>
         </div>
     </div>
 
@@ -318,8 +351,9 @@
             const now = Date.now();
             let dueCards = vocabList.filter(word => word.nextReview <= now);
             
+            // If all are processed, draw random options from the overall list to fulfill request
             if (dueCards.length === 0) {
-                dueCards = [...vocabList].sort((a, b) => a.nextReview - b.nextReview);
+                dueCards = [...vocabList];
             }
             
             const selected = dueCards.sort(() => 0.5 - Math.random()).slice(0, 3);
@@ -338,11 +372,9 @@
             grid.innerHTML = cards.map(word => `
                 <div class="vocab-card-wrapper" onclick="flipCard(this)">
                     <div class="vocab-card" id="card-${word.id}">
-                        <!-- FRONT SIDE -->
                         <div class="card-front">
                             <div class="german">${word.de}</div>
                         </div>
-                        <!-- BACK SIDE -->
                         <div class="card-back" onclick="event.stopPropagation();">
                             <div class="english">${word.en}</div>
                             <div class="action-buttons">
@@ -379,9 +411,9 @@
             const cardElement = document.getElementById(`card-${id}`);
             if (cardElement) {
                 const wrapper = cardElement.parentElement;
-                wrapper.style.opacity = '0.1';
+                wrapper.style.opacity = '0.15';
                 wrapper.style.pointerEvents = 'none';
-                wrapper.style.transform = 'scale(0.95)';
+                wrapper.style.transform = 'scale(0.96)';
                 wrapper.style.transition = 'all 0.3s ease';
             }
         }
