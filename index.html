@@ -30,91 +30,65 @@
             overflow-x: hidden;
         }
 
-        /* --- SIDEBAR SYSTEM --- */
-        .sidebar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 100vh;
+        /* --- THREE-COLUMN PERMANENT STATIC LAYOUT --- */
+        .left-column {
             width: 280px;
+            min-width: 280px;
             background: var(--sidebar-bg);
             border-right: 1px solid var(--border-color);
             padding: 2rem 1.5rem;
-            transform: translateX(-100%);
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 1000;
             display: flex;
             flex-direction: column;
             gap: 1.5rem;
-        }
-
-        .sidebar.open {
-            transform: translateX(0);
-        }
-
-        /* --- MINIMALIST ARROW TOGGLES --- */
-        .sidebar-toggle, .right-toggle {
-            position: fixed;
-            top: 1.5rem;
-            width: 2.5rem;
-            height: 2.5rem;
-            background: var(--card-bg-front);
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            cursor: pointer;
-            font-family: inherit;
-            font-size: 1.2rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1001;
-            transition: all 0.2s ease;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
-            user-select: none;
-        }
-        
-        .sidebar-toggle {
-            left: 1.5rem;
-        }
-        
-        .right-toggle {
-            right: 1.5rem;
-        }
-        
-        .sidebar-toggle:hover, .right-toggle:hover {
-            background: var(--card-bg-back);
-            border-color: #cfc4b5;
-        }
-        }
-        /* --- RIGHT SIDEBAR: DASHBOARD --- */
-        .right-sidebar {
-            position: fixed;
-            top: 0;
-            right: 0;
             height: 100vh;
+            position: sticky;
+            top: 0;
+        }
+
+        .main-content {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 2rem;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .right-column {
             width: 320px;
+            min-width: 320px;
             background: var(--sidebar-bg);
             border-left: 1px solid var(--border-color);
             padding: 2rem 1.5rem;
-            transform: translateX(100%);
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 1000;
             display: flex;
             flex-direction: column;
             gap: 1.5rem;
+            height: 100vh;
+            position: sticky;
+            top: 0;
             overflow-y: auto;
         }
-        
-        .right-sidebar.open {
-            transform: translateX(0);
+
+        .container {
+            max-width: 550px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
         }
-        
-        /* Dashboard Component Typography */
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+
+        /* --- COMPONENT STYLES --- */
         .dash-clock {
             font-size: 2.5rem;
             font-style: italic;
             text-align: center;
-            margin-top: 1.5rem;
             color: var(--text-color);
         }
         
@@ -122,7 +96,7 @@
             font-size: 1rem;
             text-align: center;
             color: #666;
-            margin-bottom: 1rem;
+            margin-bottom: 0.5rem;
             border-bottom: 1px solid var(--border-color);
             padding-bottom: 1rem;
         }
@@ -188,7 +162,7 @@
         }
 
         .word-scroll-list {
-            max-height: 140px;
+            max-height: 180px;
             overflow-y: auto;
             margin-top: 0.5rem;
             padding-left: 0.5rem;
@@ -202,33 +176,6 @@
         .word-item {
             border-bottom: 1px dashed var(--border-color);
             padding: 0.25rem 0;
-        }
-
-        /* --- TROUBLE WORDS DRAWER --- */
-        .trouble-section {
-            background: rgba(239, 68, 68, 0.05);
-            border: 1px solid rgba(239, 68, 68, 0.2);
-            border-radius: 4px;
-            padding: 0.5rem;
-        }
-        .trouble-summary {
-            color: #b91c1c;
-        }
-        .review-trouble-btn {
-            width: 100%;
-            font-family: inherit;
-            font-size: 0.8rem;
-            background: #fee2e2;
-            color: #b91c1c;
-            border: 1px solid #fca5a5;
-            padding: 0.4rem;
-            margin-bottom: 0.5rem;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        .review-trouble-btn:hover {
-            background: #fca5a5;
         }
 
         /* --- SENTENCE EXAMPLES SYSTEM --- */
@@ -256,30 +203,6 @@
             font-family: inherit;
         }
 
-        /* --- MAIN INTERFACE --- */
-        .main-content {
-            flex-grow: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 4rem 2rem 2rem 2rem;
-            transition: margin-left 0.3s ease;
-        }
-
-        .container {
-            max-width: 550px;
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            gap: 2rem;
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 1.5rem;
-        }
-
         /* --- 3D FLIP CARD DESIGN --- */
         .vocab-card-wrapper {
             perspective: 1000px;
@@ -292,19 +215,16 @@
             width: 100%;
             height: 100%;
             transform-style: preserve-3d;
-            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
             border-radius: 6px;
             border-left: 3px solid transparent; 
             transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s ease, background-color 0.3s ease;
         }
 
-        /* Subtle, sophisticated tint for completely unread cards */
         .vocab-card.new-card {
-            border-left: 3px solid #007acc; /* Minimal blue indicator line */
-            background-color: #f4f9fc !important; /* Soft blue paper tint */
+            border-left: 3px solid #007acc;
+            background-color: #f4f9fc !important;
         }
 
-        /* Keeps card backgrounds unified when flipped */
         .vocab-card.new-card .card-front {
             background-color: #f4f9fc !important;
         }
@@ -414,56 +334,32 @@
 </head>
 <body>
 
-    <button id="left-toggle-btn" class="sidebar-toggle" onclick="toggleSidebar()">&gt;</button>
-
-        <!-- Update your Sidebar Titles inside index.html -->
-        <div id="sidebar" class="sidebar">
-            <div class="stats-box">
-                <h3 style="font-style: italic; font-weight: normal; margin-top: 1.5rem;">________</h3>
-                <div>New: <span id="stat-learning">0</span></div>
-                <div>In Progress: <span id="stat-reviewing">0</span></div>
-                <div>Mastered: <span id="stat-mastered">0</span></div>
-            </div>
-        
-            <div class="list-container">
-                <!-- Note: We can completely delete the old "Trouble Pool" HTML drawer block here -->
-                
-                <details>
-                    <summary>New Pool (<span id="count-learning-list">0</span>)</summary>
-                    <div id="list-learning" class="word-scroll-list"></div>
-                </details>
-        
-                <details>
-                    <summary>In Progress Pool (<span id="count-reviewing-list">0</span>)</summary>
-                    <div id="list-reviewing" class="word-scroll-list"></div>
-                </details>
-        
-                <details>
-                    <summary>Mastered Pool (<span id="count-mastered-list">0</span>)</summary>
-                    <div id="list-mastered" class="word-scroll-list"></div>
-                </details>
-            </div>
+    <div class="left-column">
+        <div class="stats-box">
+            <h3 style="font-style: italic; font-weight: normal; margin-top: 0.5rem;">Vokabeln Matrix</h3>
+            <div>New: <span id="stat-learning">0</span></div>
+            <div>In Progress: <span id="stat-reviewing">0</span></div>
+            <div>Mastered: <span id="stat-mastered">0</span></div>
         </div>
     
-    <button id="right-toggle-btn" class="right-toggle" onclick="toggleRightSidebar()">&lt;</button>
-        
-        <div id="right-sidebar" class="right-sidebar">
-            <div class="dash-clock" id="live-clock">00:00</div>
-            <div class="dash-date" id="live-date">Lade Datum...</div>
-        
-            <div class="dash-section">
-                <h4>Wetter aktuell</h4>
-                <div id="weather-display" style="font-size: 0.9rem; line-height: 1.4;">Lade Wetterdaten...</div>
-    </div>
-
-    <div class="dash-section">
-        <h4>Was geschah am <span id="wiki-today-label">...</span>?</h4>
-        <div id="wikipedia-events" style="max-height: 350px; overflow-y: auto; padding-right: 5px;">
-            Lade historische Ereignisse...
+        <div class="list-container">
+            <details open>
+                <summary>New Pool (<span id="count-learning-list">0</span>)</summary>
+                <div id="list-learning" class="word-scroll-list"></div>
+            </details>
+    
+            <details open>
+                <summary>In Progress Pool (<span id="count-reviewing-list">0</span>)</summary>
+                <div id="list-reviewing" class="word-scroll-list"></div>
+            </details>
+    
+            <details>
+                <summary>Mastered Pool (<span id="count-mastered-list">0</span>)</summary>
+                <div id="list-mastered" class="word-scroll-list"></div>
+            </details>
         </div>
     </div>
-</div>
-
+    
     <div class="main-content">
         <div class="container">
             <div id="vocab-grid" class="grid"></div>
@@ -474,22 +370,25 @@
         </div>
     </div>
 
+    <div class="right-column">
+        <div class="dash-clock" id="live-clock">00:00</div>
+        <div class="dash-date" id="live-date">Lade Datum...</div>
+    
+        <div class="dash-section">
+            <h4>Wetter aktuell</h4>
+            <div id="weather-display" style="font-size: 0.9rem; line-height: 1.4;">Lade Wetterdaten...</div>
+        </div>
+
+        <div class="dash-section">
+            <h4>Was geschah am <span id="wiki-today-label">...</span>?</h4>
+            <div id="wikipedia-events" style="max-height: 400px; overflow-y: auto; padding-right: 5px;">
+                Lade historische Ereignisse...
+            </div>
+        </div>
+    </div>
+
     <script>
         let vocabList = [];
-
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const btn = document.getElementById('left-toggle-btn');
-            
-            sidebar.classList.toggle('open');
-            
-            // If open, point left to close. If closed, point right to open.
-            if (sidebar.classList.contains('open')) {
-                btn.innerHTML = "&lt;";
-            } else {
-                btn.innerHTML = "&gt;";
-            }
-        }
 
         async function initializeApp() {
             try {
@@ -517,6 +416,9 @@
 
                 updateSidebarData();
                 loadSessionCards();
+                startDashboardClock();
+                fetchGermanWeather();
+                fetchWikipediaHistory();
 
             } catch (error) {
                 console.error("Initialization failed:", error);
@@ -536,27 +438,23 @@
         function updateSidebarData() {
             const now = Date.now();
             
-            // 1. New / Due: ONLY brand-new cards (never seen before) OR cards whose timers have actively expired
             const newOrDue = vocabList.filter(w => {
                 const nextReviewNum = parseInt(w.nextReview || 0, 10);
                 return nextReviewNum === 0 || nextReviewNum <= now;
             });
             
-            // 2. In Progress: Any card you have encountered at least once, that hasn't graduated to mastery yet.
             const inProgress = vocabList.filter(w => {
                 const nextReviewNum = parseInt(w.nextReview || 0, 10);
                 const intervalNum = parseInt(w.interval || 0, 10);
                 return nextReviewNum > 0 && intervalNum <= 48;
             });
             
-            // 3. Mastered: Long-term memory tracking remains completely identical
             const mastered = vocabList.filter(w => {
                 const nextReviewNum = parseInt(w.nextReview || 0, 10);
                 const intervalNum = parseInt(w.interval || 0, 10);
                 return intervalNum > 48 && nextReviewNum > now;
             });
         
-            // Update the Sidebar Counters
             document.getElementById('stat-learning').innerText = newOrDue.length;
             document.getElementById('stat-reviewing').innerText = inProgress.length;
             document.getElementById('stat-mastered').innerText = mastered.length;
@@ -565,15 +463,12 @@
             document.getElementById('count-reviewing-list').innerText = inProgress.length;
             document.getElementById('count-mastered-list').innerText = mastered.length;
         
-            // Render lists inside dropdown panels
             document.getElementById('list-learning').innerHTML = newOrDue.map(w => `<div class="word-item"><b>${w.de}</b>: ${w.en}</div>`).join('') || 'All caught up!';
             
-            // RENDER IN PROGRESS PANEL WITH DYNAMIC SLIDING COLOR MATRIX
             document.getElementById('list-reviewing').innerHTML = inProgress.map(w => {
                 const nextReviewNum = parseInt(w.nextReview || 0, 10);
                 const intervalNum = parseInt(w.interval || 0, 10);
                 
-                // Calculate the exact span of time this card was assigned to wait
                 const totalWaitMs = intervalNum * 60 * 60 * 1000;
                 const timeRemainingMs = nextReviewNum - now;
                 
@@ -581,19 +476,11 @@
                 let dueBadge = "";
         
                 if (timeRemainingMs <= 0) {
-                    // Card is completely due or overdue -> Deep Editorial Red
                     colorStyle = "color: #b91c1c; font-weight: bold;";
                     dueBadge = `<span style="font-size: 0.75rem; letter-spacing:0.05em; margin-left: 6px; padding: 1px 4px; background: #fee2e2; border-radius:3px;">DUE</span>`;
                 } else {
-                    // Calculate a ratio from 0.0 (just reviewed) to 1.0 (about to be due)
-                    // Guard against division by zero just in case
                     const ratio = totalWaitMs > 0 ? Math.min(Math.max((totalWaitMs - timeRemainingMs) / totalWaitMs, 0), 1) : 1;
-                    
-                    // HSL Hue Scale: 120 is Green, 0 is Red.
-                    // As ratio approaches 1.0, hue sweeps smoothly down from 120 toward 0.
                     const hue = Math.round(120 - (ratio * 120));
-                    
-                    // Softened saturation (65%) and subtle editorial darkness (40%) to keep text perfectly legible
                     colorStyle = `color: hsl(${hue}, 65%, 40%);`;
                 }
         
@@ -620,17 +507,6 @@
             renderCards(selected);
         }
 
-        function loadTroubleCards() {
-            const troublePool = vocabList.filter(w => w.isTrouble === true);
-            if (troublePool.length === 0) {
-                alert("Your Trouble Pool is empty! Great job!");
-                return;
-            }
-            const selected = troublePool.sort(() => 0.5 - Math.random()).slice(0, 3);
-            renderCards(selected);
-            toggleSidebar();
-        }
-
         function renderCards(cards) {
             const grid = document.getElementById('vocab-grid');
             if (!grid) return;
@@ -641,11 +517,9 @@
             }
 
             grid.innerHTML = cards.map(word => {
-                // 1. Detect if the card is completely brand new
                 const isNew = (word.nextReview === 0);
                 const cardClass = isNew ? "vocab-card new-card" : "vocab-card";
 
-                // 2. Direction randomizer
                 const isDeToEn = Math.random() < 0.5;
                 const frontText = isDeToEn ? word.de : word.en;
                 const backText = isDeToEn ? word.en : word.de;
@@ -654,17 +528,13 @@
 
                 return `
                     <div class="vocab-card-wrapper" onclick="flipCard(this)">
-                        <!-- Inject the dynamic minimalist class name here -->
                         <div class="${cardClass}" id="card-${word.id}">
-                            <!-- FRONT SIDE -->
                             <div class="card-front">
                                 <div class="german">${frontLabel}${frontText}</div>
                             </div>
-                            <!-- BACK SIDE -->
                             <div class="card-back" onclick="event.stopPropagation();">
                                 <div class="english" style="font-size: 1.8rem; font-style: italic;">${backText}</div>
-                        
-                                <!-- EXAMPLES TOGGLE REGION -->
+                                
                                 ${word.examples && word.examples.length > 0 ? `
                                     <button class="example-toggle-btn" onclick="document.getElementById('ex-${word.id}').style.display='block'; this.style.display='none';">
                                         Show Example ↓
@@ -688,7 +558,7 @@
 
         window.flipCard = function(wrapper) {
             const card = wrapper.querySelector('.vocab-card');
-            card.classList.toggle('flipped');
+            if (card) card.classList.toggle('flipped');
         }
 
         window.rateWord = function(id, state) {
@@ -698,20 +568,15 @@
             let word = vocabList[wordIndex];
 
             if (state === 'got') {
-                // Double the interval to pass into higher memory tiers (capped at 720 hours / 30 days)
                 word.interval = word.interval === 0 ? 1 : Math.min(word.interval * 2, 720);
                 word.isTrouble = false; 
             } else if (state === 'unsure') {
-                // "Learning Tier" anchor: push it out exactly 1 hour for gentle re-testing soon
                 word.interval = 1;
-                // Leave trouble flag unmodified so you don't accidentally eject it from sandbox lists
             } else if (state === 'forgot') {
-                // Total breakdown reset: drop to absolute zero and flag inside trouble pool
                 word.interval = 0;
                 word.isTrouble = true;
             }
 
-            // Calculate exact epoch time metrics
             word.nextReview = Date.now() + (word.interval * 60 * 60 * 1000);
             
             saveToStorage();
@@ -726,50 +591,27 @@
                 wrapper.style.transition = 'all 0.3s ease';
             }
         }
-
-        // Toggle for the right side drawer
-        function toggleRightSidebar() {
-            const sidebar = document.getElementById('right-sidebar');
-            const btn = document.getElementById('right-toggle-btn');
-            
-            sidebar.classList.toggle('open');
-            
-            // If open, point right to close. If closed, point left to open.
-            if (sidebar.classList.contains('open')) {
-                btn.innerHTML = "&gt;";
-            } else {
-                btn.innerHTML = "&lt;";
-            }
-        }
         
-        // 1. Live Clock & German Date Format
         function startDashboardClock() {
             const clockEl = document.getElementById('live-clock');
             const dateEl = document.getElementById('live-date');
             
             function update() {
                 const now = new Date();
-                
-                // Time format
                 clockEl.innerText = now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-                
-                // Full German Date String
                 dateEl.innerText = now.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' });
             }
             update();
-            setInterval(update, 60000); // Refresh every minute
+            setInterval(update, 60000);
         }
         
-        // 2. Weather Engine via Open-Meteo (No API keys required)
         async function fetchGermanWeather() {
-            // ⚠️ REPLACE these coordinates with your actual City Latitude / Longitude!
-            const lat = 50.00001949149396; // Berlin Example
-            const lon = 8.271711615077919;
+            const lat = 50.0000; 
+            const lon = 8.2717;
             
             const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&timezone=auto`;
             const weatherDisplay = document.getElementById('weather-display');
         
-            // Weather condition translation dictionary map
             const weatherCodesDe = {
                 0: "Klarer Himmel", 1: "Hauptsächlich klar", 2: "Teilweise bewölkt", 3: "Bedeckt",
                 45: "Nebel", 48: "Raureifnebel", 51: "Leichter Nieselregen", 53: "Mäßiger Nieselregen",
@@ -797,18 +639,15 @@
             } catch (e) {
                 weatherDisplay.innerText = "Wetterdaten derzeit nicht verfügbar.";
             }
-                }
+        }
                 
-        // 3. German Wikipedia History Pull Engine
         async function fetchWikipediaHistory() {
             const now = new Date();
             const day = String(now.getDate()).padStart(2, '0');
             const month = String(now.getMonth() + 1).padStart(2, '0');
             
-            // Set the text header target string
             document.getElementById('wiki-today-label').innerText = `${day}.${month}.`;
         
-            // We target the official Wikipedia Wikimedia REST API endpoint which allows open cross-origin requests
             const url = `https://de.wikipedia.org/api/rest_v1/feed/onthisday/all/${month}/${day}`;
             const container = document.getElementById('wikipedia-events');
         
@@ -817,7 +656,6 @@
                 if (!response.ok) throw new Error();
                 const data = await response.json();
         
-                // We pull the "Ereignisse" (Events) category from the JSON bundle
                 const events = data.selected || data.events || [];
                 
                 if (events.length === 0) {
@@ -825,7 +663,6 @@
                     return;
                 }
         
-                // Take a random selection of 5 fascinating historical events to keep it clean
                 const randomEvents = events.sort(() => 0.5 - Math.random()).slice(0, 5);
         
                 container.innerHTML = randomEvents.map(ev => `
@@ -833,19 +670,13 @@
                         <span class="wiki-year">${ev.year}:</span> ${ev.text}
                     </div>
                 `).join('');
-        
             } catch (e) {
                 container.innerText = "Fehler beim Laden der Wikipedia-Ereignisse.";
             }
         }
-        
-        // Hook everything into your existing app init sequences
-        // Add these three executions right to the bottom of your existing initializeApp() function:
-        startDashboardClock();
-        fetchGermanWeather();
-        fetchWikipediaHistory();
 
-        initializeApp();
+        // Initialize App on DOM Load
+        window.addEventListener('DOMContentLoaded', initializeApp);
     </script>
 </body>
 </html>
