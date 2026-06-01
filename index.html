@@ -1,221 +1,107 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart German Vocab Tab</title>
-    <style>
-        /* Updated to a clean, bright minimalist theme */
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: #ffffff;
-            color: #1e293b;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
+<script>
+    let vocabList = [];
 
-        .container {
-            max-width: 650px;
-            width: 90%;
-            text-align: center;
-        }
-
-        h1 {
-            font-size: 1.4rem;
-            color: #64748b;
-            margin-bottom: 2rem;
-            font-weight: 500;
-            letter-spacing: 0.05em;
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 1rem;
-        }
-
-        .vocab-card {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 1.5rem;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 140px;
-            position: relative;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        }
-
-        .german {
-            font-size: 1.6rem;
-            font-weight: 600;
-            color: #0f172a;
-            margin-bottom: 0.5rem;
-        }
-
-        .english {
-            font-size: 1.2rem;
-            color: #475569;
-            margin-bottom: 1rem;
-            font-weight: 500;
-        }
-
-        button {
-            padding: 0.6rem 1.2rem;
-            border-radius: 6px;
-            border: none;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 0.9rem;
-            transition: background 0.2s, transform 0.1s;
-        }
-        
-        button:active {
-            transform: scale(0.98);
-        }
-
-        .reveal-btn {
-            background-color: #2563eb;
-            color: white;
-        }
-        .reveal-btn:hover { background-color: #1d4ed8; }
-
-        .action-buttons {
-            display: flex;
-            gap: 0.75rem;
-        }
-
-        .forgot-btn {
-            background-color: #ef4444;
-            color: white;
-        }
-        .forgot-btn:hover { background-color: #dc2626; }
-
-        .got-btn {
-            background-color: #10b981;
-            color: white;
-        }
-        .got-btn:hover { background-color: #059669; }
-
-        .hidden { display: none !important; }
-        
-        .empty-state {
-            font-size: 1.2rem;
-            color: #10b981;
-            padding: 2rem;
-        }
-    </style>
-</head>
-<body>
-
-    <div class="container">
-        <h1>SMART DEUTSCH REVIEW</h1>
-        <div id="vocab-grid" class="grid"></div>
-    </div>
-
-    <script>
-        const defaultVocabulary = [
-            { id: 1, de: "das Buch", en: "the book", interval: 0, nextReview: 0 },
-            { id: 2, de: "machen", en: "to do / make", interval: 0, nextReview: 0 },
-            { id: 3, de: "sprechen", en: "to speak", interval: 0, nextReview: 0 },
-            { id: 4, de: "der Hund", en: "the dog", interval: 0, nextReview: 0 },
-            { id: 5, de: "gehen", en: "to go", interval: 0, nextReview: 0 },
-            { id: 6, de: "wichtig", en: "important", interval: 0, nextReview: 0 },
-            { id: 7, de: "versuchen", en: "to try", interval: 0, nextReview: 0 },
-            { id: 8, de: "die Zeit", en: "the time", interval: 0, nextReview: 0 },
-            { id: 9, de: "finden", en: "to find", interval: 0, nextReview: 0 },
-            { id: 10, de: "klein", en: "small / little", interval: 0, nextReview: 0 }
-        ];
-
-        let vocabList = defaultVocabulary;
-
-        // Fallback Security Check: Safely try to read localStorage
+    // Asynchronously pull the 500-word dataset from our JSON file
+    async function initializeApp() {
         try {
+            // 1. Fetch the vocabulary array file
+            const response = await fetch('vocabulary.json');
+            const defaultVocabulary = await response.json();
+
+            // 2. Read existing flashcard user metrics from local storage
             const savedData = localStorage.getItem('german_srs_vocab');
+            
             if (savedData) {
                 vocabList = JSON.parse(savedData);
+                
+                // If you expand or change the data file, sync structural updates safely
+                if (vocabList.length < defaultVocabulary.length) {
+                    // Map over new words while keeping existing review records safe
+                    const savedMap = new Map(vocabList.map(item => [item.id, item]));
+                    vocabList = defaultVocabulary.map(item => {
+                        return savedMap.has(item.id) ? savedMap.get(item.id) : item;
+                    });
+                    localStorage.setItem('german_srs_vocab', JSON.stringify(vocabList));
+                }
             } else {
+                vocabList = defaultVocabulary;
                 localStorage.setItem('german_srs_vocab', JSON.stringify(defaultVocabulary));
             }
-        } catch (e) {
-            console.warn("Local storage blocked by browser security settings. Running in fallback mode.");
+
+            // 3. Kick off the flashcard engine display
+            loadSessionCards();
+
+        } catch (error) {
+            console.error("Initialization failed: Check if vocabulary.json is in the root directory.", error);
+            document.getElementById('vocab-grid').innerHTML = 
+                `<div style="color: #ef4444; padding: 2rem;">Error loading vocabulary data file.</div>`;
+        }
+    }
+
+    function saveToStorage() {
+        try {
+            localStorage.setItem('german_srs_vocab', JSON.stringify(vocabList));
+        } catch (e) {}
+    }
+
+    function loadSessionCards() {
+        const now = Date.now();
+        let dueCards = vocabList.filter(word => word.nextReview <= now);
+        
+        if (dueCards.length === 0) {
+            dueCards = [...vocabList].sort((a, b) => a.nextReview - b.nextReview);
+        }
+        
+        const selected = dueCards.sort(() => 0.5 - Math.random()).slice(0, 3);
+        renderCards(selected);
+    }
+
+    function renderCards(cards) {
+        const grid = document.getElementById('vocab-grid');
+        if (cards.length === 0) {
+            grid.innerHTML = `<div class="empty-state">🎉 All caught up for now!</div>`;
+            return;
         }
 
-        function saveToStorage() {
-            try {
-                localStorage.setItem('german_srs_vocab', JSON.stringify(vocabList));
-            } catch (e) {
-                // If blocked, data changes will just live inside the active tab session
-            }
-        }
-
-        function loadSessionCards() {
-            const now = Date.now();
-            let dueCards = vocabList.filter(word => word.nextReview <= now);
-            
-            if (dueCards.length === 0) {
-                dueCards = [...vocabList].sort((a, b) => a.nextReview - b.nextReview);
-            }
-            
-            // Randomly shuffle and take exactly 3
-            const selected = dueCards.sort(() => 0.5 - Math.random()).slice(0, 3);
-            renderCards(selected);
-        }
-
-        function renderCards(cards) {
-            const grid = document.getElementById('vocab-grid');
-            if(cards.length === 0) {
-                grid.innerHTML = `<div class="empty-state">🎉 All caught up for now!</div>`;
-                return;
-            }
-
-            grid.innerHTML = cards.map(word => `
-                <div class="vocab-card" id="card-${word.id}">
-                    <div class="german">${word.de}</div>
-                    <div class="english hidden" id="eng-${word.id}">${word.en}</div>
-                    <button class="reveal-btn" id="rev-btn-${word.id}" onclick="revealWord(${word.id})">Reveal Meaning</button>
-                    <div class="action-buttons hidden" id="actions-${word.id}">
-                        <button class="forgot-btn" onclick="rateWord(${word.id}, false)">Forgot</button>
-                        <button class="got-btn" onclick="rateWord(${word.id}, true)">Got It</button>
-                    </div>
+        grid.innerHTML = cards.map(word => `
+            <div class="vocab-card" id="card-${word.id}">
+                <div class="german">${word.de}</div>
+                <div class="english hidden" id="eng-${word.id}">${word.en}</div>
+                <button class="reveal-btn" id="rev-btn-${word.id}" onclick="revealWord(${word.id})">Reveal Meaning</button>
+                <div class="action-buttons hidden" id="actions-${word.id}">
+                    <button class="forgot-btn" onclick="rateWord(${word.id}, false)">Forgot</button>
+                    <button class="got-btn" onclick="rateWord(${word.id}, true)">Got It</button>
                 </div>
-            `).join('');
+            </div>
+        `).join('');
+    }
+
+    window.revealWord = function(id) {
+        document.getElementById(`eng-${id}`).classList.remove('hidden');
+        document.getElementById(`actions-${id}`).classList.remove('hidden');
+        document.getElementById(`rev-btn-${id}`).classList.add('hidden');
+    }
+
+    window.rateWord = function(id, remembered) {
+        const wordIndex = vocabList.findIndex(w => w.id === id);
+        if (wordIndex === -1) return;
+
+        let word = vocabList[wordIndex];
+
+        if (remembered) {
+            word.interval = word.interval === 0 ? 1 : Math.min(word.interval * 2, 720);
+        } else {
+            word.interval = 0;
         }
 
-        window.revealWord = function(id) {
-            document.getElementById(`eng-${id}`).classList.remove('hidden');
-            document.getElementById(`actions-${id}`).classList.remove('hidden');
-            document.getElementById(`rev-btn-${id}`).classList.add('hidden');
-        }
+        word.nextReview = Date.now() + (word.interval * 60 * 60 * 1000);
+        saveToStorage();
 
-        window.rateWord = function(id, remembered) {
-            const wordIndex = vocabList.findIndex(w => w.id === id);
-            if (wordIndex === -1) return;
+        const cardElement = document.getElementById(`card-${id}`);
+        cardElement.style.opacity = '0.2';
+        cardElement.style.pointerEvents = 'none';
+    }
 
-            let word = vocabList[wordIndex];
-
-            if (remembered) {
-                word.interval = word.interval === 0 ? 1 : Math.min(word.interval * 2, 720);
-            } else {
-                word.interval = 0;
-            }
-
-            word.nextReview = Date.now() + (word.interval * 60 * 60 * 1000);
-            saveToStorage();
-
-            const cardElement = document.getElementById(`card-${id}`);
-            cardElement.style.opacity = '0.2';
-            cardElement.style.pointerEvents = 'none';
-        }
-
-        loadSessionCards();
-    </script>
-</body>
-</html>
+    // Trigger the dynamic loading routine
+    initializeApp();
+</script>
