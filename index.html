@@ -5,7 +5,8 @@
     async function initializeApp() {
         try {
             // 1. Fetch the vocabulary array file
-            const response = await fetch('vocabulary.json');
+            // Change this line near the top of your script:
+            const response = await fetch('./vocabulary.json');
             const defaultVocabulary = await response.json();
 
             // 2. Read existing flashcard user metrics from local storage
@@ -103,5 +104,8 @@
     }
 
     // Trigger the dynamic loading routine
+    // Wait for the browser to finish drawing the HTML elements before running the script
+document.addEventListener("DOMContentLoaded", () => {
     initializeApp();
+});
 </script>
