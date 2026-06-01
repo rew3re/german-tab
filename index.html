@@ -52,23 +52,39 @@
             transform: translateX(0);
         }
 
-        .sidebar-toggle {
+        /* --- MINIMALIST ARROW TOGGLES --- */
+        .sidebar-toggle, .right-toggle {
             position: fixed;
             top: 1.5rem;
-            left: 1.5rem;
+            width: 2.5rem;
+            height: 2.5rem;
             background: var(--card-bg-front);
             border: 1px solid var(--border-color);
-            padding: 0.5rem 0.8rem;
             border-radius: 4px;
             cursor: pointer;
             font-family: inherit;
-            font-size: 0.9rem;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             z-index: 1001;
-            transition: background 0.2s;
+            transition: all 0.2s ease;
             box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+            user-select: none;
         }
-        .sidebar-toggle:hover {
+        
+        .sidebar-toggle {
+            left: 1.5rem;
+        }
+        
+        .right-toggle {
+            right: 1.5rem;
+        }
+        
+        .sidebar-toggle:hover, .right-toggle:hover {
             background: var(--card-bg-back);
+            border-color: #cfc4b5;
+        }
         }
         /* --- RIGHT SIDEBAR: DASHBOARD --- */
         .right-sidebar {
@@ -91,25 +107,6 @@
         
         .right-sidebar.open {
             transform: translateX(0);
-        }
-        
-        .right-toggle {
-            position: fixed;
-            top: 1.5rem;
-            right: 1.5rem;
-            background: var(--card-bg-front);
-            border: 1px solid var(--border-color);
-            padding: 0.5rem 0.8rem;
-            border-radius: 4px;
-            cursor: pointer;
-            font-family: inherit;
-            font-size: 0.9rem;
-            z-index: 1001;
-            transition: background 0.2s;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
-        }
-        .right-toggle:hover {
-            background: var(--card-bg-back);
         }
         
         /* Dashboard Component Typography */
@@ -417,7 +414,7 @@
 </head>
 <body>
 
-    <button class="sidebar-toggle" onclick="toggleSidebar()">☰ Menu</button>
+    <button id="left-toggle-btn" class="sidebar-toggle" onclick="toggleSidebar()">&gt;</button>
 
         <!-- Update your Sidebar Titles inside index.html -->
         <div id="sidebar" class="sidebar">
@@ -448,7 +445,7 @@
             </div>
         </div>
     
-    <button class="right-toggle" onclick="toggleRightSidebar()">Dashboard 📋</button>
+    <button id="right-toggle-btn" class="right-toggle" onclick="toggleRightSidebar()">&lt;</button>
         
         <div id="right-sidebar" class="right-sidebar">
             <div class="dash-clock" id="live-clock">00:00</div>
@@ -481,7 +478,17 @@
         let vocabList = [];
 
         function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('open');
+            const sidebar = document.getElementById('sidebar');
+            const btn = document.getElementById('left-toggle-btn');
+            
+            sidebar.classList.toggle('open');
+            
+            // If open, point left to close. If closed, point right to open.
+            if (sidebar.classList.contains('open')) {
+                btn.innerHTML = "&lt;";
+            } else {
+                btn.innerHTML = "&gt;";
+            }
         }
 
         async function initializeApp() {
@@ -721,67 +728,77 @@
         }
 
         // Toggle for the right side drawer
-function toggleRightSidebar() {
-    document.getElementById('right-sidebar').classList.toggle('open');
-}
-
-// 1. Live Clock & German Date Format
-function startDashboardClock() {
-    const clockEl = document.getElementById('live-clock');
-    const dateEl = document.getElementById('live-date');
-    
-    function update() {
-        const now = new Date();
-        
-        // Time format
-        clockEl.innerText = now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-        
-        // Full German Date String
-        dateEl.innerText = now.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' });
-    }
-    update();
-    setInterval(update, 60000); // Refresh every minute
-}
-
-// 2. Weather Engine via Open-Meteo (No API keys required)
-async function fetchGermanWeather() {
-    // ⚠️ REPLACE these coordinates with your actual City Latitude / Longitude!
-    const lat = 50.00001949149396; // Berlin Example
-    const lon = 8.271711615077919;
-    
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&timezone=auto`;
-    const weatherDisplay = document.getElementById('weather-display');
-
-    // Weather condition translation dictionary map
-    const weatherCodesDe = {
-        0: "Klarer Himmel", 1: "Hauptsächlich klar", 2: "Teilweise bewölkt", 3: "Bedeckt",
-        45: "Nebel", 48: "Raureifnebel", 51: "Leichter Nieselregen", 53: "Mäßiger Nieselregen",
-        55: "Dichter Nieselregen", 61: "Leichter Regen", 63: "Mäßiger Regen", 65: "Starker Regen",
-        71: "Leichter Schneefall", 73: "Mäßiger Schneefall", 75: "Starker Schneefall",
-        77: "Schneegriesel", 80: "Leichte Regenschauer", 81: "Mäßige Regenschauer",
-        82: "Starke Regenschauer", 95: "Gewitter"
-    };
-
-    try {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error();
-        const data = await response.json();
-        
-        const temp = Math.round(data.current_weather.temperature);
-        const code = data.current_weather.weathercode;
-        const condition = weatherCodesDe[code] || "Unbekanntes Wetter";
-        const wind = data.current_weather.windspeed;
-
-        weatherDisplay.innerHTML = `
-            <div style="font-size: 1.4rem; font-weight: bold; color: var(--text-color); margin-bottom: 0.25rem;">${temp}°C</div>
-            <div style="font-style: italic;">${condition}</div>
-            <div style="font-size: 0.8rem; color: #666; margin-top: 0.25rem;">Windgeschwindigkeit: ${wind} km/h</div>
-        `;
-    } catch (e) {
-        weatherDisplay.innerText = "Wetterdaten derzeit nicht verfügbar.";
-    }
+        function toggleRightSidebar() {
+            const sidebar = document.getElementById('right-sidebar');
+            const btn = document.getElementById('right-toggle-btn');
+            
+            sidebar.classList.toggle('open');
+            
+            // If open, point right to close. If closed, point left to open.
+            if (sidebar.classList.contains('open')) {
+                btn.innerHTML = "&gt;";
+            } else {
+                btn.innerHTML = "&lt;";
+            }
         }
         
+        // 1. Live Clock & German Date Format
+        function startDashboardClock() {
+            const clockEl = document.getElementById('live-clock');
+            const dateEl = document.getElementById('live-date');
+            
+            function update() {
+                const now = new Date();
+                
+                // Time format
+                clockEl.innerText = now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+                
+                // Full German Date String
+                dateEl.innerText = now.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' });
+            }
+            update();
+            setInterval(update, 60000); // Refresh every minute
+        }
+        
+        // 2. Weather Engine via Open-Meteo (No API keys required)
+        async function fetchGermanWeather() {
+            // ⚠️ REPLACE these coordinates with your actual City Latitude / Longitude!
+            const lat = 50.00001949149396; // Berlin Example
+            const lon = 8.271711615077919;
+            
+            const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&timezone=auto`;
+            const weatherDisplay = document.getElementById('weather-display');
+        
+            // Weather condition translation dictionary map
+            const weatherCodesDe = {
+                0: "Klarer Himmel", 1: "Hauptsächlich klar", 2: "Teilweise bewölkt", 3: "Bedeckt",
+                45: "Nebel", 48: "Raureifnebel", 51: "Leichter Nieselregen", 53: "Mäßiger Nieselregen",
+                55: "Dichter Nieselregen", 61: "Leichter Regen", 63: "Mäßiger Regen", 65: "Starker Regen",
+                71: "Leichter Schneefall", 73: "Mäßiger Schneefall", 75: "Starker Schneefall",
+                77: "Schneegriesel", 80: "Leichte Regenschauer", 81: "Mäßige Regenschauer",
+                82: "Starke Regenschauer", 95: "Gewitter"
+            };
+        
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error();
+                const data = await response.json();
+                
+                const temp = Math.round(data.current_weather.temperature);
+                const code = data.current_weather.weathercode;
+                const condition = weatherCodesDe[code] || "Unbekanntes Wetter";
+                const wind = data.current_weather.windspeed;
+        
+                weatherDisplay.innerHTML = `
+                    <div style="font-size: 1.4rem; font-weight: bold; color: var(--text-color); margin-bottom: 0.25rem;">${temp}°C</div>
+                    <div style="font-style: italic;">${condition}</div>
+                    <div style="font-size: 0.8rem; color: #666; margin-top: 0.25rem;">Windgeschwindigkeit: ${wind} km/h</div>
+                `;
+            } catch (e) {
+                weatherDisplay.innerText = "Wetterdaten derzeit nicht verfügbar.";
+            }
+                }
+                
         // 3. German Wikipedia History Pull Engine
         async function fetchWikipediaHistory() {
             const now = new Date();
