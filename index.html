@@ -5,126 +5,265 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smart German Vocab Tab</title>
     <style>
-        body {
+        :root {
+            --bg-color: #fdfdfc;
+            --text-color: #1c1917;
+            --card-bg-front: #fbfbf9;
+            --card-bg-back: #f5f5f0;
+            --border-color: #e7e5e4;
+        }
+
+        * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            background-color: #ffffff;
-            color: #1e293b;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: Georgia, Cambria, "Times New Roman", Times, serif;
+            display: flex;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* --- SIDEBAR SYSTEM --- */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 280px;
+            background: var(--card-bg-front);
+            border-right: 1px solid var(--border-color);
+            padding: 2rem 1.5rem;
+            transform: translateX(-100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1000;
             display: flex;
             flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .sidebar.open {
+            transform: translateX(0);
+        }
+
+        .sidebar-toggle {
+            position: fixed;
+            top: 1.5rem;
+            left: 1.5rem;
+            background: var(--card-bg-front);
+            border: 1px solid var(--border-color);
+            padding: 0.5rem 0.8rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.9rem;
+            z-index: 1001;
+            transition: background 0.2s;
+        }
+        .sidebar-toggle:hover {
+            background: var(--card-bg-back);
+        }
+
+        .stats-box {
+            font-size: 0.95rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1rem;
+        }
+
+        .list-container {
+            flex-grow: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        details {
+            width: 100%;
+        }
+
+        summary {
+            cursor: pointer;
+            font-weight: bold;
+            padding: 0.3rem 0;
+            user-select: none;
+            outline: none;
+        }
+
+        .word-scroll-list {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 0.5rem;
+            padding-left: 0.5rem;
+            font-size: 0.85rem;
+            line-height: 1.4;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .word-item {
+            border-bottom: 1px dashed var(--border-color);
+            padding: 0.25rem 0;
+        }
+
+        /* --- MAIN INTERFACE --- */
+        .main-content {
+            flex-grow: 1;
+            display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
+            padding: 2rem;
+            transition: margin-left 0.3s ease;
         }
 
         .container {
-            max-width: 650px;
-            width: 90%;
-            text-align: center;
-        }
-
-        h1 {
-            font-size: 1.4rem;
-            color: #64748b;
-            margin-bottom: 2rem;
-            font-weight: 500;
-            letter-spacing: 0.05em;
+            max-width: 550px;
+            width: 100%;
         }
 
         .grid {
             display: grid;
             grid-template-columns: 1fr;
-            gap: 1rem;
+            gap: 1.5rem;
+        }
+
+        /* --- 3D FLIP CARD DESIGN --- */
+        .vocab-card-wrapper {
+            perspective: 1000px;
+            min-height: 220px;
+            cursor: pointer;
         }
 
         .vocab-card {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
             border-radius: 12px;
-            padding: 1.5rem;
+        }
+
+        .vocab-card.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            min-height: 140px;
-            position: relative;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+        }
+
+        .card-front {
+            background: var(--card-bg-front);
+        }
+
+        .card-back {
+            background: var(--card-bg-back);
+            transform: rotateY(180deg);
         }
 
         .german {
-            font-size: 1.6rem;
-            font-weight: 600;
-            color: #0f172a;
-            margin-bottom: 0.5rem;
+            font-size: 2.2rem;
+            font-style: italic;
+            color: var(--text-color);
+            text-align: center;
         }
 
         .english {
-            font-size: 1.2rem;
-            color: #475569;
-            margin-bottom: 1rem;
-            font-weight: 500;
+            font-size: 1.5rem;
+            color: #44403c;
+            margin-bottom: 1.5rem;
+            text-align: center;
         }
 
-        button {
-            padding: 0.6rem 1.2rem;
-            border-radius: 6px;
-            border: none;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 0.9rem;
-            transition: background 0.2s, transform 0.1s;
-        }
-        
-        button:active {
-            transform: scale(0.98);
-        }
-
-        .reveal-btn {
-            background-color: #2563eb;
-            color: white;
-        }
-        .reveal-btn:hover { background-color: #1d4ed8; }
-
+        /* --- ACTIONS BLOCK --- */
         .action-buttons {
             display: flex;
-            gap: 0.75rem;
+            gap: 1rem;
+            width: 100%;
+            justify-content: center;
         }
 
-        .forgot-btn {
-            background-color: #ef4444;
-            color: white;
+        button.action-btn {
+            font-family: inherit;
+            padding: 0.5rem 1.5rem;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            font-size: 0.95rem;
+            background: var(--card-bg-front);
+            transition: all 0.2s;
         }
-        .forgot-btn:hover { background-color: #dc2626; }
-
-        .got-btn {
-            background-color: #10b981;
-            color: white;
-        }
-        .got-btn:hover { background-color: #059669; }
-
-        .hidden { display: none !important; }
         
+        button.forgot-btn:hover { background: #fee2e2; color: #b91c1c; border-color: #fca5a5; }
+        button.got-btn:hover { background: #dcfce7; color: #15803d; border-color: #86efac; }
+
         .empty-state {
-            font-size: 1.2rem;
-            color: #10b981;
-            padding: 2rem;
+            font-size: 1.5rem;
+            font-style: italic;
+            text-align: center;
+            color: #15803d;
         }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1>SMART DEUTSCH REVIEW</h1>
-        <div id="vocab-grid" class="grid"></div>
+    <button class="sidebar-toggle" onclick="toggleSidebar()">☰ Menu</button>
+
+    <!-- Navigation Drawer Sidebar -->
+    <div id="sidebar" class="sidebar">
+        <h3 style="font-style: italic; font-weight: normal; margin-top: 1.5rem;">Session Stats</h3>
+        <div class="stats-box">
+            <div>To Review: <span id="stat-due">0</span></div>
+            <div>Words Mastered: <span id="stat-done">0</span></div>
+        </div>
+
+        <div class="list-container">
+            <details>
+                <summary>To Review Next (<span id="count-due-list">0</span>)</summary>
+                <div id="list-due" class="word-scroll-list"></div>
+            </details>
+
+            <details>
+                <summary>Reviewed/Mastered (<span id="count-done-list">0</span>)</summary>
+                <div id="list-done" class="word-scroll-list"></div>
+            </details>
+        </div>
+    </div>
+
+    <!-- Main Dynamic Application Workspace -->
+    <div class="main-content">
+        <div class="container">
+            <div id="vocab-grid" class="grid"></div>
+        </div>
     </div>
 
     <script>
         let vocabList = [];
 
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+        }
+
         async function initializeApp() {
             try {
-                // Fetch using a relative path that works globally on GitHub Pages
                 const response = await fetch('./vocabulary.json');
                 if (!response.ok) throw new Error("File fetch failed");
                 
@@ -133,12 +272,9 @@
                 
                 if (savedData) {
                     vocabList = JSON.parse(savedData);
-                    
                     if (vocabList.length < defaultVocabulary.length) {
                         const savedMap = new Map(vocabList.map(item => [item.id, item]));
-                        vocabList = defaultVocabulary.map(item => {
-                            return savedMap.has(item.id) ? savedMap.get(item.id) : item;
-                        });
+                        vocabList = defaultVocabulary.map(item => savedMap.has(item.id) ? savedMap.get(item.id) : item);
                         localStorage.setItem('german_srs_vocab', JSON.stringify(vocabList));
                     }
                 } else {
@@ -146,13 +282,14 @@
                     localStorage.setItem('german_srs_vocab', JSON.stringify(defaultVocabulary));
                 }
 
+                updateSidebarData();
                 loadSessionCards();
 
             } catch (error) {
                 console.error("Initialization failed:", error);
                 const grid = document.getElementById('vocab-grid');
                 if (grid) {
-                    grid.innerHTML = `<div style="color: #ef4444; padding: 2rem;">Error: vocabulary.json missing or incorrectly placed in root folder.</div>`;
+                    grid.innerHTML = `<div style="color: #b91c1c; text-align: center;">Error: vocabulary.json layout issue or file missing.</div>`;
                 }
             }
         }
@@ -161,6 +298,20 @@
             try {
                 localStorage.setItem('german_srs_vocab', JSON.stringify(vocabList));
             } catch (e) {}
+        }
+
+        function updateSidebarData() {
+            const now = Date.now();
+            const due = vocabList.filter(w => w.nextReview <= now);
+            const mastered = vocabList.filter(w => w.nextReview > now);
+
+            document.getElementById('stat-due').innerText = due.length;
+            document.getElementById('stat-done').innerText = mastered.length;
+            document.getElementById('count-due-list').innerText = due.length;
+            document.getElementById('count-done-list').innerText = mastered.length;
+
+            document.getElementById('list-due').innerHTML = due.map(w => `<div class="word-item"><b>${w.de}</b>: ${w.en}</div>`).join('') || 'None due';
+            document.getElementById('list-done').innerHTML = mastered.map(w => `<div class="word-item"><b>${w.de}</b>: ${w.en}</div>`).join('') || 'None items mastered';
         }
 
         function loadSessionCards() {
@@ -185,22 +336,28 @@
             }
 
             grid.innerHTML = cards.map(word => `
-                <div class="vocab-card" id="card-${word.id}">
-                    <div class="german">${word.de}</div>
-                    <div class="english hidden" id="eng-${word.id}">${word.en}</div>
-                    <button class="reveal-btn" id="rev-btn-${word.id}" onclick="revealWord(${word.id})">Reveal Meaning</button>
-                    <div class="action-buttons hidden" id="actions-${word.id}">
-                        <button class="forgot-btn" onclick="rateWord(${word.id}, false)">Forgot</button>
-                        <button class="got-btn" onclick="rateWord(${word.id}, true)">Got It</button>
+                <div class="vocab-card-wrapper" onclick="flipCard(this)">
+                    <div class="vocab-card" id="card-${word.id}">
+                        <!-- FRONT SIDE -->
+                        <div class="card-front">
+                            <div class="german">${word.de}</div>
+                        </div>
+                        <!-- BACK SIDE -->
+                        <div class="card-back" onclick="event.stopPropagation();">
+                            <div class="english">${word.en}</div>
+                            <div class="action-buttons">
+                                <button class="action-btn forgot-btn" onclick="rateWord(${word.id}, false)">Forgot</button>
+                                <button class="action-btn got-btn" onclick="rateWord(${word.id}, true)">Got It</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             `).join('');
         }
 
-        window.revealWord = function(id) {
-            document.getElementById(`eng-${id}`).classList.remove('hidden');
-            document.getElementById(`actions-${id}`).classList.remove('hidden');
-            document.getElementById(`rev-btn-${id}`).classList.add('hidden');
+        window.flipCard = function(wrapper) {
+            const card = wrapper.querySelector('.vocab-card');
+            card.classList.toggle('flipped');
         }
 
         window.rateWord = function(id, remembered) {
@@ -217,15 +374,18 @@
 
             word.nextReview = Date.now() + (word.interval * 60 * 60 * 1000);
             saveToStorage();
+            updateSidebarData();
 
             const cardElement = document.getElementById(`card-${id}`);
             if (cardElement) {
-                cardElement.style.opacity = '0.2';
-                cardElement.style.pointerEvents = 'none';
+                const wrapper = cardElement.parentElement;
+                wrapper.style.opacity = '0.1';
+                wrapper.style.pointerEvents = 'none';
+                wrapper.style.transform = 'scale(0.95)';
+                wrapper.style.transition = 'all 0.3s ease';
             }
         }
 
-        // Run now that the page DOM elements are fully painted above
         initializeApp();
     </script>
 </body>
