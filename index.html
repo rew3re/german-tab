@@ -101,7 +101,7 @@
         }
 
         .word-scroll-list {
-            max-height: 180px;
+            max-height: 140px;
             overflow-y: auto;
             margin-top: 0.5rem;
             padding-left: 0.5rem;
@@ -152,7 +152,7 @@
             font-size: 0.9rem;
             text-align: left;
             width: 100%;
-            display: none; /* Kept hidden until toggled */
+            display: none;
         }
         .example-sentence {
             margin-bottom: 0.4rem;
@@ -207,6 +207,19 @@
             transform-style: preserve-3d;
             transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
             border-radius: 6px;
+            border-left: 3px solid transparent; 
+            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s ease, background-color 0.3s ease;
+        }
+
+        /* Subtle, sophisticated tint for completely unread cards */
+        .vocab-card.new-card {
+            border-left: 3px solid #007acc; /* Minimal blue indicator line */
+            background-color: #f4f9fc !important; /* Soft blue paper tint */
+        }
+
+        /* Keeps card backgrounds unified when flipped */
+        .vocab-card.new-card .card-front {
+            background-color: #f4f9fc !important;
         }
 
         .vocab-card.flipped {
@@ -235,7 +248,7 @@
         .card-back {
             background: var(--card-bg-back);
             transform: rotateY(180deg);
-            justify-content: space-between; /* Yield clean spacing with dynamic text fields */
+            justify-content: space-between;
         }
 
         .german {
@@ -256,7 +269,7 @@
         /* --- ACTIONS & CONTROL BUTTONS --- */
         .action-buttons {
             display: flex;
-            gap: 1rem;
+            gap: 0.5rem;
             width: 100%;
             justify-content: center;
             margin-top: auto;
@@ -264,16 +277,19 @@
 
         button.action-btn {
             font-family: inherit;
-            padding: 0.5rem 1.5rem;
+            padding: 0.5rem 1rem;
             border-radius: 4px;
             border: 1px solid var(--border-color);
             cursor: pointer;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             background: var(--card-bg-front);
             transition: all 0.2s;
+            flex: 1;
+            text-align: center;
         }
         
         button.forgot-btn:hover { background: #fee2e2; color: #b91c1c; border-color: #fca5a5; }
+        button.unsure-btn:hover { background: #fef3c7; color: #b45309; border-color: #fcd34d; }
         button.got-btn:hover { background: #dcfce7; color: #15803d; border-color: #86efac; }
 
         .more-container {
@@ -313,16 +329,15 @@
 
     <button class="sidebar-toggle" onclick="toggleSidebar()">☰ Menu</button>
 
-    <!-- Navigation Drawer Sidebar -->
     <div id="sidebar" class="sidebar">
         <h3 style="font-style: italic; font-weight: normal; margin-top: 1.5rem;">Session Stats</h3>
         <div class="stats-box">
-            <div>To Review: <span id="stat-due">0</span></div>
-            <div>Words Mastered: <span id="stat-done">0</span></div>
+            <div>Learning/Due: <span id="stat-learning">0</span></div>
+            <div>Reviewing: <span id="stat-reviewing">0</span></div>
+            <div>Mastered: <span id="stat-mastered">0</span></div>
         </div>
 
         <div class="list-container">
-            <!-- DEDICATED TROUBLE AREA -->
             <div class="trouble-section">
                 <details>
                     <summary class="trouble-summary">⚠️ Trouble Words (<span id="count-trouble-list">0</span>)</summary>
@@ -334,18 +349,22 @@
             </div>
 
             <details>
-                <summary>To Review Next (<span id="count-due-list">0</span>)</summary>
-                <div id="list-due" class="word-scroll-list"></div>
+                <summary>Learning / Due (<span id="count-learning-list">0</span>)</summary>
+                <div id="list-learning" class="word-scroll-list"></div>
             </details>
 
             <details>
-                <summary>Reviewed/Mastered (<span id="count-done-list">0</span>)</summary>
-                <div id="list-done" class="word-scroll-list"></div>
+                <summary>Reviewing Tier (<span id="count-reviewing-list">0</span>)</summary>
+                <div id="list-reviewing" class="word-scroll-list"></div>
+            </details>
+
+            <details>
+                <summary>Mastered Tier (<span id="count-mastered-list">0</span>)</summary>
+                <div id="list-mastered" class="word-scroll-list"></div>
             </details>
         </div>
     </div>
 
-    <!-- Main Dynamic Application Workspace -->
     <div class="main-content">
         <div class="container">
             <div id="vocab-grid" class="grid"></div>
@@ -381,6 +400,7 @@
                 } else {
                     vocabList = defaultVocabulary.map(item => {
                         if (item.isTrouble === undefined) item.isTrouble = false;
+                        if (item.interval === undefined) item.interval = 0;
                         return item;
                     });
                     localStorage.setItem('german_srs_vocab', JSON.stringify(vocabList));
@@ -406,18 +426,31 @@
 
         function updateSidebarData() {
             const now = Date.now();
-            const due = vocabList.filter(w => w.nextReview <= now);
-            const mastered = vocabList.filter(w => w.nextReview > now);
+            
+            // Tier 1: Learning or completely overdue items (Interval <= 1 Hour)
+            const learning = vocabList.filter(w => w.interval <= 1 || w.nextReview <= now);
+            
+            // Tier 2: Reviewing items (Interval > 1 Hour but <= 48 Hours, and not currently overdue)
+            const reviewing = vocabList.filter(w => w.interval > 1 && w.interval <= 48 && w.nextReview > now);
+            
+            // Tier 3: Mastered long-term memory elements (Interval > 48 Hours, and not currently overdue)
+            const mastered = vocabList.filter(w => w.interval > 48 && w.nextReview > now);
+            
+            // Target Pool: Manual forgot-flag tracking items
             const trouble = vocabList.filter(w => w.isTrouble === true);
 
-            document.getElementById('stat-due').innerText = due.length;
-            document.getElementById('stat-done').innerText = mastered.length;
-            document.getElementById('count-due-list').innerText = due.length;
-            document.getElementById('count-done-list').innerText = mastered.length;
+            document.getElementById('stat-learning').innerText = learning.length;
+            document.getElementById('stat-reviewing').innerText = reviewing.length;
+            document.getElementById('stat-mastered').innerText = mastered.length;
+            
+            document.getElementById('count-learning-list').innerText = learning.length;
+            document.getElementById('count-reviewing-list').innerText = reviewing.length;
+            document.getElementById('count-mastered-list').innerText = mastered.length;
             document.getElementById('count-trouble-list').innerText = trouble.length;
 
-            document.getElementById('list-due').innerHTML = due.map(w => `<div class="word-item"><b>${w.de}</b>: ${w.en}</div>`).join('') || 'None due';
-            document.getElementById('list-done').innerHTML = mastered.map(w => `<div class="word-item"><b>${w.de}</b>: ${w.en}</div>`).join('') || 'No items mastered';
+            document.getElementById('list-learning').innerHTML = learning.map(w => `<div class="word-item"><b>${w.de}</b>: ${w.en}</div>`).join('') || 'Clear!';
+            document.getElementById('list-reviewing').innerHTML = reviewing.map(w => `<div class="word-item"><b>${w.de}</b>: ${w.en} <span style="color:#888;">(${w.interval}h)</span></div>`).join('') || 'Empty';
+            document.getElementById('list-mastered').innerHTML = mastered.map(w => `<div class="word-item"><b>${w.de}</b>: ${w.en} ✓</div>`).join('') || 'None yet';
             document.getElementById('list-trouble').innerHTML = trouble.map(w => `<div class="word-item"><b>${w.de}</b>: ${w.en}</div>`).join('') || 'No trouble words yet';
         }
 
@@ -454,23 +487,30 @@
             }
 
             grid.innerHTML = cards.map(word => {
-                // Coin-flip: 50% chance for German front, 50% chance for English front
+                // 1. Detect if the card is completely brand new
+                const isNew = (word.nextReview === 0);
+                const cardClass = isNew ? "vocab-card new-card" : "vocab-card";
+
+                // 2. Direction randomizer
                 const isDeToEn = Math.random() < 0.5;
-        
-                // Dynamically assign card front and back content based on the coin flip
                 const frontText = isDeToEn ? word.de : word.en;
                 const backText = isDeToEn ? word.en : word.de;
+        
                 const frontLabel = isDeToEn ? "" : "<span style='font-size:0.8rem; font-style:normal; color:#888; display:block; margin-bottom:0.5rem;'>Translate to German:</span>";
 
                 return `
                     <div class="vocab-card-wrapper" onclick="flipCard(this)">
-                        <div class="vocab-card" id="card-${word.id}">
+                        <!-- Inject the dynamic minimalist class name here -->
+                        <div class="${cardClass}" id="card-${word.id}">
+                            <!-- FRONT SIDE -->
                             <div class="card-front">
                                 <div class="german">${frontLabel}${frontText}</div>
                             </div>
+                            <!-- BACK SIDE -->
                             <div class="card-back" onclick="event.stopPropagation();">
-                                <div class="english" style="font-size: 2rem; font-style: italic;">${backText}</div>
+                                <div class="english" style="font-size: 1.8rem; font-style: italic;">${backText}</div>
                         
+                                <!-- EXAMPLES TOGGLE REGION -->
                                 ${word.examples && word.examples.length > 0 ? `
                                     <button class="example-toggle-btn" onclick="document.getElementById('ex-${word.id}').style.display='block'; this.style.display='none';">
                                         Show Examples ↓
@@ -481,8 +521,9 @@
                                 ` : ''}
 
                                 <div class="action-buttons">
-                                    <button class="action-btn forgot-btn" onclick="rateWord(${word.id}, false)">Forgot</button>
-                                    <button class="action-btn got-btn" onclick="rateWord(${word.id}, true)">Got It</button>
+                                    <button class="action-btn forgot-btn" onclick="rateWord(${word.id}, 'forgot')">Forgot</button>
+                                    <button class="action-btn unsure-btn" onclick="rateWord(${word.id}, 'unsure')">Unsure</button>
+                                    <button class="action-btn got-btn" onclick="rateWord(${word.id}, 'got')">Got It</button>
                                 </div>
                             </div>
                         </div>
@@ -496,21 +537,29 @@
             card.classList.toggle('flipped');
         }
 
-        window.rateWord = function(id, remembered) {
+        window.rateWord = function(id, state) {
             const wordIndex = vocabList.findIndex(w => w.id === id);
             if (wordIndex === -1) return;
 
             let word = vocabList[wordIndex];
 
-            if (remembered) {
+            if (state === 'got') {
+                // Double the interval to pass into higher memory tiers (capped at 720 hours / 30 days)
                 word.interval = word.interval === 0 ? 1 : Math.min(word.interval * 2, 720);
-                word.isTrouble = false;
-            } else {
+                word.isTrouble = false; 
+            } else if (state === 'unsure') {
+                // "Learning Tier" anchor: push it out exactly 1 hour for gentle re-testing soon
+                word.interval = 1;
+                // Leave trouble flag unmodified so you don't accidentally eject it from sandbox lists
+            } else if (state === 'forgot') {
+                // Total breakdown reset: drop to absolute zero and flag inside trouble pool
                 word.interval = 0;
                 word.isTrouble = true;
             }
 
+            // Calculate exact epoch time metrics
             word.nextReview = Date.now() + (word.interval * 60 * 60 * 1000);
+            
             saveToStorage();
             updateSidebarData();
 
