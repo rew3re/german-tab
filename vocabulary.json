@@ -2477,7 +2477,7 @@
   {
     "id": 250,
     "de": "fragen",
-    "en": "questions",
+    "en": "to ask",
     "interval": 0,
     "nextReview": 0,
     "isTrouble": false,
@@ -3238,7 +3238,7 @@
   {
     "id": 319,
     "de": "wohl",
-    "en": "probably",
+    "en": "whole/wholly",
     "interval": 0,
     "nextReview": 0,
     "isTrouble": false,
