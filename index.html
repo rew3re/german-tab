@@ -330,10 +330,42 @@
             text-align: center;
             color: #15803d;
         }
+
+        /* --- MOBILE RESPONSIVE MEDIA QUERIES --- */
+        @media (max-width: 992px) {
+            body {
+                flex-direction: column;
+            }
+            .left-column, .right-column {
+                width: 100%;
+                min-width: 100%;
+                height: auto;
+                position: relative;
+                border: none;
+            }
+            .left-column {
+                border-bottom: 1px solid var(--border-color);
+                order: 2; /* Move lists below flashcards on tablet */
+            }
+            .main-content {
+                width: 100%;
+                height: auto;
+                padding: 2rem 1rem;
+                order: 1; /* Keep Flashcards right up front */
+            }
+            .right-column {
+                border-top: 1px solid var(--border-color);
+                order: 3; /* Move clocks/widgets to bottom */
+            }
+            .word-scroll-list {
+                max-height: 250px; /* Give lists room on mobile screens */
+            }
+        }
     </style>
 </head>
 <body>
 
+    <!-- PERMANENT LEFT COLUMN -->
     <div class="left-column">
         <div class="stats-box">
             <h3 style="font-style: italic; font-weight: normal; margin-top: 0.5rem;">Vokabeln Matrix</h3>
@@ -360,6 +392,7 @@
         </div>
     </div>
     
+    <!-- PERMANENT CENTER COLUMN -->
     <div class="main-content">
         <div class="container">
             <div id="vocab-grid" class="grid"></div>
@@ -370,6 +403,7 @@
         </div>
     </div>
 
+    <!-- PERMANENT RIGHT COLUMN -->
     <div class="right-column">
         <div class="dash-clock" id="live-clock">00:00</div>
         <div class="dash-date" id="live-date">Lade Datum...</div>
